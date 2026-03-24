@@ -2,7 +2,7 @@
 
 Developed by Munaga Sai Krishna
 🔗 GitHub:  https://github.com/saikrishnamunaga/RESUME-CHECKER.gitm
- (replace with your actual link)
+ 
 
 Overview
 
