@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Screening</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // TestConnection Component
+    function TestConnection() {
+      const [status, setStatus] = useState('Testing...');
+      const [result, setResult] = useState(null);
+
+      useEffect(() => {
+        fetch('http://127.0.0.1:8000/')
+          .then(res => res.json())
+          .then(data => {
+            setStatus('✅ Backend Connected!');
+            setResult(data);
+          })
+          .catch(err => setStatus('❌ Backend Offline: ' + err.message));
+      }, []);
+
+      const uploadTest = async () => {
+        const formData = new FormData();
+        formData.append('test', 'Hello Backend!');
+        try {
+          const res = await fetch('http://127.0.0.1:8000/api/v1/screening/', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+          console.log('Success:', data);
+        } catch (err) {
+          console.error('Error:', err);
+        }
+      };
+
+      return (
+        <div className="p-8 max-w-2xl mx-auto mt-8 bg-white rounded-lg shadow-lg">
+          <h1 className="text-3xl font-bold mb-6 text-gray-800">Backend Connection Test</h1>
+          <div className="mb-8 p-4 bg-blue-50 rounded-lg">
+            <p className="text-xl font-semibold">Status: <span className={status.includes('✅') ? 'text-green-600' : 'text-red-600'}>{status}</span></p>
+            {result && (
+              <pre className="mt-4 p-4 bg-gray-100 rounded text-sm overflow-auto">
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            )}
+          </div>
+          <button 
+            onClick={uploadTest}
+            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+          >
+            Test Upload to Backend
+          </button>
+        </div>
+      );
+    }
+
+    // App Component
+    function App() {
+      return (
+        <div className="min-h-screen">
+          <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-6 shadow-lg">
+            <h1 className="text-4xl font-bold">AI Resume Screening System</h1>
+            <p className="mt-2 opacity-90">Full-stack ML app - Backend ✓ Frontend ✓</p>
+          </div>
+          <TestConnection />
+        </div>
+      );
+    }
+
+    // Render
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
