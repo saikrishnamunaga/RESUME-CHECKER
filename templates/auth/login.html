@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-page min-vh-100 d-flex align-items-center py-5">
+  <div class="container">
+    <div class="row gx-5 align-items-center">
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="auth-copy p-5 rounded-4 shadow-sm bg-white">
+          <h2 class="fw-bold mb-3">Welcome back</h2>
+          <p class="text-muted">Securely access your AI Resume Analyzer Pro workspace. Upload resumes, review reports, and match your profile to jobs faster.</p>
+          <div class="mt-4">
+            <div class="feature-pill mb-3">
+              <i class="fas fa-check-circle text-primary me-2"></i> Smart resume scoring
+            </div>
+            <div class="feature-pill mb-3">
+              <i class="fas fa-check-circle text-primary me-2"></i> Linkedin-ready insights
+            </div>
+            <div class="feature-pill">
+              <i class="fas fa-check-circle text-primary me-2"></i> Secure application workflow
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card rounded-4 shadow-lg border-0">
+          <div class="card-body p-5">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <div>
+                <h3 class="mb-1">Sign in</h3>
+                <p class="text-muted mb-0">Use your Gmail account or your registered credentials.</p>
+              </div>
+              <span class="badge bg-soft-primary text-primary">Premium</span>
+            </div>
+            <form method="post" novalidate>
+              {{ form.hidden_tag() }}
+              {% if config['GOOGLE_OAUTH_CLIENT_ID'] and config['GOOGLE_OAUTH_CLIENT_SECRET'] %}
+              <div class="d-grid gap-3 mb-4">
+                <a class="btn btn-outline-secondary btn-lg rounded-4 text-start" href="{{ url_for('google.login') }}">
+                  <i class="fab fa-google me-3"></i> Continue with Google
+                </a>
+                {% endif %}
+                {% if config['FACEBOOK_OAUTH_CLIENT_ID'] and config['FACEBOOK_OAUTH_CLIENT_SECRET'] %}
+                <a class="btn btn-outline-secondary btn-lg rounded-4 text-start" href="{{ url_for('facebook.login') }}">
+                  <i class="fab fa-facebook-f me-3"></i> Continue with Facebook
+                </a>
+                {% endif %}
+              </div>
+              <div class="divider text-center my-4">or continue with email</div>
+              <div class="mb-3">
+                {{ form.email.label(class_='form-label') }}
+                {{ form.email(class_='form-control form-control-lg shadow-sm', placeholder='you@gmail.com') }}
+              </div>
+              <div class="mb-3">
+                {{ form.password.label(class_='form-label') }}
+                {{ form.password(class_='form-control form-control-lg shadow-sm', placeholder='Enter your password') }}
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="form-check">
+                  {{ form.remember(class_='form-check-input') }}
+                  {{ form.remember.label(class_='form-check-label') }}
+                </div>
+                <a class="small text-primary" href="#">Forgot password?</a>
+              </div>
+              <button class="btn btn-primary btn-lg w-100 rounded-4" type="submit">{{ form.submit.label.text }}</button>
+            </form>
+            <p class="text-center text-muted mb-0 mt-4">New to AI Resume Analyzer Pro? <a href="{{ url_for('auth.register') }}" class="text-primary">Create account</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

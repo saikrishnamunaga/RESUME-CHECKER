@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
+      <div>
+        <h2 class="fw-bold mb-1">All Reports</h2>
+        <p class="text-muted">Detailed resume reports generated from your uploads.</p>
+      </div>
+      <a href="{{ url_for('dashboard.profile') }}" class="btn btn-outline-primary">Back to profile</a>
+    </div>
+    {% if reports %}
+      <div class="row g-4">
+        {% for report in reports %}
+          <div class="col-md-6">
+            <div class="card shadow-sm rounded-4 p-4 h-100 border-0">
+              <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                  <h5 class="mb-1">Report #{{ report.id }}</h5>
+                  <p class="text-muted small mb-0">{{ report.created_at.strftime('%b %d, %Y') }}</p>
+                </div>
+                <span class="badge bg-primary">{{ report.score }}%</span>
+              </div>
+              <p class="text-muted mb-3">{{ report.details.summary }}</p>
+              <ul class="list-unstyled small text-muted mb-0">
+                <li class="mb-2"><strong class="text-dark">Word count:</strong> {{ report.details.word_count }}</li>
+                <li><strong class="text-dark">Skill match:</strong> {{ report.details.skill_count }}</li>
+              </ul>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="card shadow-sm rounded-4 p-4">
+        <p class="text-muted mb-0">You do not have any reports yet. Upload a resume to generate the first one.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

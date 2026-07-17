@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard-header pb-4 mb-4 border-bottom">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
+    <div>
+      <h2 class="fw-bold mb-2">Welcome back, {{ current_user.name.split(' ')[0] }}</h2>
+      <p class="text-muted">Upload your resume and review the latest ATS score, skill match, and report history.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-primary" href="{{ url_for('dashboard.profile') }}">Profile</a>
+      <a class="btn btn-outline-secondary" href="{{ url_for('auth.logout') }}">Sign out</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm rounded-4 p-4 h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0">Latest ATS score</h5>
+        <span class="badge bg-soft-primary text-primary">Insight</span>
+      </div>
+      <p class="display-6 fw-bold mb-2">{{ report.score if report else '—' }}%</p>
+      <p class="text-muted mb-0">Score calculated from resume structure, keywords, and skill match.</p>
+      {% if resume %}
+      <p class="small text-muted mt-2 mb-0">Latest CV: {{ resume.filename }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm rounded-4 p-4 h-100">
+      <h5 class="mb-3">Resume health</h5>
+      {% if report %}
+        <div class="progress rounded-pill mb-3" style="height: 14px;">
+          <div class="progress-bar bg-secondary rounded-pill" role="progressbar" style="width: {{ report.score }}%"></div>
+        </div>
+        <p class="text-muted mb-0">Your resume is {{ report.score }}% optimized for current job search trends.</p>
+      {% else %}
+        <p class="text-muted mb-0">Upload your resume to see your first score and recommendations.</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm rounded-4 p-4 h-100">
+      <h5 class="mb-3">Fast action</h5>
+      <p class="text-muted mb-4">Get instant resume feedback in seconds and review your analytics from anywhere.</p>
+      <a class="btn btn-primary btn-sm" href="#upload-panel">Upload resume</a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4" id="upload-panel">
+  <div class="col-lg-6">
+    <div class="card shadow-sm rounded-4 p-4 h-100">
+      <h4 class="mb-3">Upload resume</h4>
+      <p class="text-muted">PDF or DOCX resume uploads with an intelligent analysis workflow.</p>
+      <form method="post" action="{{ url_for('dashboard.upload_resume') }}" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="mb-4">
+          {{ form.resume_file(class_='form-control form-control-lg shadow-sm') }}
+        </div>
+        <div class="mb-4">
+          {{ form.job_description.label(class_='form-label') }}
+          {{ form.job_description(class_='form-control shadow-sm', rows='5', placeholder='Paste the job description here...') }}
+        </div>
+        <button class="btn btn-primary btn-lg rounded-4" type="submit">{{ form.submit.label.text }}</button>
+      </form>
+      <hr class="my-4">
+      <form method="post" action="{{ url_for('dashboard.improve_resume') }}">
+        <div class="mb-3">
+          <label class="form-label">Improve resume for this job</label>
+          <textarea class="form-control shadow-sm" name="job_description" rows="4" placeholder="Paste the job description again or reuse the existing one..."></textarea>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary" type="submit">Suggest improvements</button>
+          <a class="btn btn-outline-secondary" href="{{ url_for('dashboard.download_updated_resume') }}">Download draft</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card shadow-sm rounded-4 p-4 h-100">
+      <h4 class="mb-3">Latest analysis</h4>
+      {% if report and resume %}
+        <div class="mb-3">
+          <span class="badge bg-primary">Score {{ report.score }}%</span>
+        </div>
+        <p class="mb-1"><strong class="text-dark">Resume</strong>: {{ resume.filename }}</p>
+        <p class="text-muted mb-3">Uploaded on {{ resume.uploaded_at.strftime('%b %d, %Y') }}</p>
+        <p class="text-muted mb-3">This is your latest uploaded CV and its current analysis.</p>
+        <ul class="list-unstyled mb-3 text-muted">
+          <li class="mb-2"><i class="fas fa-circle me-2 text-primary small"></i> Word count: {{ report.details.word_count }}</li>
+          <li class="mb-2"><i class="fas fa-circle me-2 text-primary small"></i> Skill match: {{ report.details.skill_count }}</li>
+          <li class="mb-2"><i class="fas fa-circle me-2 text-primary small"></i> Job match: {{ report.details.match_score }}%</li>
+        </ul>
+        <div class="rounded-4 bg-light p-3">
+          <h6 class="mb-2">Summary</h6>
+          <p class="mb-0 text-muted small">{{ report.details.summary }}</p>
+          {% if report.details.matched_skills %}
+          <p class="mt-3 mb-1 small fw-semibold text-dark">Matched keywords</p>
+          <p class="mb-0 text-muted small">{{ report.details.matched_skills | join(', ') }}</p>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="text-muted">No resume uploaded yet. Upload a resume to generate your first report and ATS score.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

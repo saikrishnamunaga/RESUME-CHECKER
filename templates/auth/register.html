@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="auth-page min-vh-100 d-flex align-items-center py-5">
+  <div class="container">
+    <div class="row gx-5 align-items-center">
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="auth-copy p-5 rounded-4 shadow-sm bg-white">
+          <h2 class="fw-bold mb-3">Create your free account</h2>
+          <p class="text-muted">Join the platform built for professionals who want smarter resume feedback and stronger job-match confidence.</p>
+          <div class="mt-4">
+            <div class="feature-pill mb-3">
+              <i class="fas fa-rocket text-primary me-2"></i> Fast onboarding
+            </div>
+            <div class="feature-pill mb-3">
+              <i class="fas fa-shield-alt text-primary me-2"></i> Secure resume storage
+            </div>
+            <div class="feature-pill">
+              <i class="fas fa-lightbulb text-primary me-2"></i> Actionable recommendations
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card rounded-4 shadow-lg border-0">
+          <div class="card-body p-5">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+              <div>
+                <h3 class="mb-1">Register</h3>
+                <p class="text-muted mb-0">Grow your professional resume toolkit with a Gmail-only account.</p>
+              </div>
+              <span class="badge bg-soft-secondary text-secondary">Secure</span>
+            </div>
+            <form method="post" novalidate>
+              {{ form.hidden_tag() }}
+              <div class="mb-3">
+                {{ form.name.label(class_='form-label') }}
+                {{ form.name(class_='form-control form-control-lg shadow-sm', placeholder='Full name') }}
+              </div>
+              <div class="mb-3">
+                {{ form.email.label(class_='form-label') }}
+                {{ form.email(class_='form-control form-control-lg shadow-sm', placeholder='you@gmail.com') }}
+              </div>
+              <div class="mb-3">
+                {{ form.password.label(class_='form-label') }}
+                {{ form.password(class_='form-control form-control-lg shadow-sm', placeholder='Create a password') }}
+              </div>
+              <div class="mb-4">
+                {{ form.confirm_password.label(class_='form-label') }}
+                {{ form.confirm_password(class_='form-control form-control-lg shadow-sm', placeholder='Confirm password') }}
+              </div>
+              <button class="btn btn-primary btn-lg w-100 rounded-4" type="submit">{{ form.submit.label.text }}</button>
+            </form>
+            <p class="text-center text-muted mb-0 mt-4">Already registered? <a href="{{ url_for('auth.login') }}" class="text-primary">Sign in</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

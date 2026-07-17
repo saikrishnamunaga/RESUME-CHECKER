@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-4">
+      <div>
+        <h2 class="fw-bold mb-1">Admin Panel</h2>
+        <p class="text-muted">Manage application settings, user activity, and resume analytics from one place.</p>
+      </div>
+      <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary">Back to home</a>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card rounded-4 shadow-sm p-4 h-100">
+      <h5>Users</h5>
+      <p class="text-muted small mb-0">Monitor and manage registered accounts.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card rounded-4 shadow-sm p-4 h-100">
+      <h5>Reports</h5>
+      <p class="text-muted small mb-0">Review resume report activity and trends.</p>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card rounded-4 shadow-sm p-4 h-100">
+      <h5>Settings</h5>
+      <p class="text-muted small mb-0">Configure platform options and security settings.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
