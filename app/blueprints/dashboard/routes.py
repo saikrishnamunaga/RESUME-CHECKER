@@ -1,6 +1,8 @@
 import os
 from flask import current_app, flash, redirect, render_template, request, send_from_directory, url_for
+
 from flask_login import current_user, login_required
+
 
 from . import dashboard_bp
 from app.forms import ResumeUploadForm
@@ -82,9 +84,49 @@ def improve_resume():
     return redirect(url_for('dashboard.dashboard_home'))
 
 
+@dashboard_bp.route('/api/resume/edit', methods=['POST'])
+@login_required
+def api_edit_resume():
+    payload = request.get_json(silent=True) or {}
+    job_description = (payload.get('job_description') or '').strip() or None
+    if not job_description:
+        return {
+            'ok': False,
+            'error': 'job_description is required',
+        }, 400
+
+    resume_id = payload.get('resume_id')
+    resume_query = Resume.query.filter_by(user_id=current_user.id)
+    if resume_id is not None:
+        resume_query = resume_query.filter_by(id=resume_id)
+    resume = resume_query.order_by(Resume.uploaded_at.desc()).first()
+
+    if not resume:
+        return {
+            'ok': False,
+            'error': 'No resume found for this user',
+        }, 404
+
+    suggestions = generate_improvement_suggestions(resume.text or '', job_description)
+
+    # Keep the generated draft compatible with the existing download endpoint.
+    export_dir = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(export_dir, exist_ok=True)
+    export_path = os.path.join(export_dir, f"updated_resume_{current_user.id}.txt")
+    export_updated_resume(export_path, resume.text or '', job_description)
+
+    return {
+        'ok': True,
+        'resume_id': resume.id,
+        'suggestions': suggestions,
+        'download_url': url_for('dashboard.download_updated_resume', _external=True),
+    }, 200
+
+
 @dashboard_bp.route('/download-updated-resume')
 @login_required
 def download_updated_resume():
+
     export_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"updated_resume_{current_user.id}.txt")
     if not os.path.exists(export_path):
         flash('No updated resume draft is available yet.', 'warning')
