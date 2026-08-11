@@ -1,0 +1,42 @@
+# =============================================================================
+# docker-compose.prod.yml — Production overrides for AI Resume Analyzer Pro
+# =============================================================================
+# Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# =============================================================================
+
+version: "3.9"
+
+services:
+  web:
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: "0"
+      PREFERRED_URL_SCHEME: https
+
+    # Production uses gunicorn (already the default CMD in Dockerfile)
+    command: >
+      sh -c "flask db upgrade && gunicorn run:app --bind 0.0.0.0:${PORT:-5000} --workers 4 --threads 2 --timeout 120 --access-logfile - --error-logfile -"
+
+    restart: always
+
+    # No live-reload in production — don't mount the whole source
+    volumes:
+      - uploads_data:/app/uploads
+      - instance_data:/app/instance
+
+  db:
+    restart: always
+
+    # Production-grade PostgreSQL settings
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    # Mount backup/init scripts if needed
+    # volumes:
+    #   - ./db-init:/docker-entrypoint-initdb.d:ro
+    #   - postgres_data:/var/lib/postgresql/data
+    #   - db_backups:/backups
+

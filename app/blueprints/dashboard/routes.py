@@ -7,7 +7,8 @@ from flask_login import current_user, login_required
 from . import dashboard_bp
 from app.forms import ResumeUploadForm
 from app.models import Resume, Report
-from app.services.resume_service import analyze_resume_text, export_updated_resume, extract_resume_text, generate_improvement_suggestions
+from app.services.resume_service import analyze_resume_text, export_updated_resume, extract_resume_text, generate_improvement_suggestions, export_updated_docx, export_updated_pdf
+from app.services.gemini_service import rewrite_resume_with_gemini
 from app.utils.file_utils import save_uploaded_file
 from app.extensions import db
 
@@ -107,20 +108,82 @@ def api_edit_resume():
             'error': 'No resume found for this user',
         }, 404
 
+    # Use Gemini once to produce the edited resume.
+    try:
+        edited = rewrite_resume_with_gemini(
+            resume_text=resume.text or '',
+            job_description=job_description,
+        )
+    except Exception as e:
+        return {'ok': False, 'error': f'Gemini rewrite failed: {str(e)}'}, 400
+
+    # Keep existing suggestion logic (non-ATS logic) unchanged.
     suggestions = generate_improvement_suggestions(resume.text or '', job_description)
 
-    # Keep the generated draft compatible with the existing download endpoint.
-    export_dir = current_app.config['UPLOAD_FOLDER']
-    os.makedirs(export_dir, exist_ok=True)
-    export_path = os.path.join(export_dir, f"updated_resume_{current_user.id}.txt")
-    export_updated_resume(export_path, resume.text or '', job_description)
+    # Provide minimal ATS scoring fields too (frontend may expect them in future updates).
+    ats_before = analyze_resume_text(resume.text or '', job_description).get('match_score', 0)
+    ats_after = analyze_resume_text(edited, job_description).get('match_score', 0)
 
+    # Preserve response shape.
     return {
         'ok': True,
         'resume_id': resume.id,
+        'original': resume.text or '',
+        'edited': edited,
         'suggestions': suggestions,
+        'ats_score_before': ats_before,
+        'ats_score_after': ats_after,
         'download_url': url_for('dashboard.download_updated_resume', _external=True),
     }, 200
+
+
+@dashboard_bp.route('/api/resume/accept', methods=['POST'])
+@login_required
+def api_accept_resume():
+    """Accept an edited resume and return an optimized file as DOCX or PDF."""
+    payload = request.get_json(silent=True) or {}
+
+    original_resume = (payload.get('original_resume') or '').strip()
+    edited_resume = (payload.get('edited_resume') or '').strip()
+    job_description = (payload.get('job_description') or '').strip() or None
+    output_format = (payload.get('output_format') or payload.get('format') or '').strip().lower()
+
+    if not edited_resume:
+        return {'ok': False, 'error': 'edited_resume is required'}, 400
+    if not output_format:
+        return {'ok': False, 'error': 'output_format/format is required'}, 400
+    if output_format not in {'docx', 'pdf'}:
+        return {'ok': False, 'error': 'output_format/format must be one of: docx, pdf'}, 400
+
+
+    # Generate a final optimized resume from the edited resume text.
+    optimized_text = edited_resume
+    if job_description:
+        # Re-run the existing builder so structure/headings match the app's current conventions.
+        from app.services.resume_service import build_updated_resume_text
+        optimized_text = build_updated_resume_text(edited_resume, job_description)
+
+    export_dir = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(export_dir, exist_ok=True)
+
+    filename = 'Resume_Optimized.docx' if output_format == 'docx' else 'Resume_Optimized.pdf'
+    export_path = os.path.join(export_dir, filename)
+
+    try:
+        if output_format == 'docx':
+            from app.services.resume_service import export_updated_docx
+            export_updated_docx(export_path, optimized_text)
+        else:
+            from app.services.resume_service import export_updated_pdf
+            export_updated_pdf(export_path, optimized_text)
+    except Exception as e:
+        return {'ok': False, 'error': f'File generation failed: {str(e)}'}, 400
+
+    # Return generated file as attachment.
+    from flask import send_file
+    return send_file(export_path, as_attachment=True, download_name=filename)
+
+
 
 
 @dashboard_bp.route('/download-updated-resume')

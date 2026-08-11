@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Database
+*.db
+*.sqlite3
+instance/
+
+# Uploads (will be mounted as volume)
+uploads/
+!uploads/.gitkeep
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker (avoid nested builds)
+docker-compose.yml
+.dockerignore
+
+# Logs
+*.log
+
+# Tests / docs (not needed at runtime)
+tests/
+README.md
+TODO.md
+

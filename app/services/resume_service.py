@@ -6,6 +6,11 @@ from typing import Dict, List, Optional
 import requests
 from PyPDF2 import PdfReader
 from docx import Document
+from docx.shared import Pt
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+
 
 
 def extract_text_from_pdf(filepath: str) -> str:
@@ -105,3 +110,82 @@ def export_updated_resume(filepath: str, text: str, job_description: Optional[st
     with open(filepath, 'w', encoding='utf-8') as fh:
         fh.write(updated_text)
     return filepath
+
+
+def export_updated_docx(filepath: str, resume_text: str) -> str:
+    """Export plain text to DOCX (best-effort formatting)."""
+    doc = Document()
+
+    # Very lightweight formatting: headings if line looks like a header.
+    for line in resume_text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            doc.add_paragraph('')
+            continue
+        if stripped.lower() in {
+            'updated resume draft',
+            'professional summary',
+            'suggested improvements',
+            'original resume content',
+        }:
+            doc.add_heading(stripped, level=1)
+        elif re.match(r'^\d+\.\s+', stripped):
+            # bullet-like suggestions
+            p = doc.add_paragraph(stripped)
+            p.style = 'List Bullet'
+        else:
+            doc.add_paragraph(stripped)
+
+    os.makedirs(os.path.dirname(filepath) or '.', exist_ok=True)
+    doc.save(filepath)
+    return filepath
+
+
+def export_updated_pdf(filepath: str, resume_text: str) -> str:
+    """Export plain text to PDF using reportlab (word-wrapping)."""
+    os.makedirs(os.path.dirname(filepath) or '.', exist_ok=True)
+
+    c = canvas.Canvas(filepath, pagesize=letter)
+    width, height = letter
+    left = 0.75 * inch
+    top = height - 0.75 * inch
+    y = top
+
+    # Basic font settings
+    c.setFont("Helvetica", 10)
+
+    def draw_wrapped(text: str, x: float, y_pos: float, max_width: float):
+        words = text.split(' ')
+        line = ''
+        lines = []
+        for w in words:
+            test = (line + ' ' + w).strip()
+            if c.stringWidth(test, "Helvetica", 10) <= max_width:
+                line = test
+            else:
+                lines.append(line)
+                line = w
+        if line:
+            lines.append(line)
+        for ln in lines:
+            yield ln
+
+    max_width = width - 2 * left
+
+    for raw_line in resume_text.splitlines():
+        line = raw_line.strip('\r')
+        if not line.strip():
+            y -= 12
+            continue
+
+        for wrapped_line in draw_wrapped(line, left, y, max_width):
+            if y < 0.75 * inch:
+                c.showPage()
+                c.setFont("Helvetica", 10)
+                y = top
+            c.drawString(left, y, wrapped_line)
+            y -= 12
+
+    c.save()
+    return filepath
+
